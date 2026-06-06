@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<!--
+  panda_gazebo.urdf.xacro
+  목적: 받아온 순정 Panda(panda_description)를 "건드리지 않고" 가져와서,
+        그 위에 Gazebo 구동에 필요한 두 가지를 얹는다.
+          (1) ros2_control + gazebo_ros2_control 플러그인  -> 관절을 ROS2로 제어
+          (2) RGB-D 카메라 센서                             -> 영상/깊이를 ROS 토픽으로 발행
+  이 파일은 xacro로 처리되어야 $(find ...) 가 실제 경로로 풀린다.
+-->
+<robot name="panda" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============================================================
+       (0) 받아온 순정 Panda 본체(링크/관절/메쉬)를 그대로 포함
+       - vendor 파일을 수정하지 않고 include 만 함 (원본 보존)
+       ============================================================ -->
+  <!-- 원본 panda.urdf 는 질량/관성이 없어 Gazebo 에서 관절이 사라진다.
+       각 링크에 관성을 주입해 둔 panda_inertia.urdf 를 대신 포함한다.
+       (생성: scripts/generate_panda_inertia.py) -->
+  <xacro:include filename="$(find arm_bringup)/urdf/panda_inertia.urdf"/>
+
+  <!-- 베이스(panda_link0)를 world 에 고정. 안 하면 로봇이 자유낙하/전복한다. -->
+  <link name="world"/>
+  <joint name="world_to_panda" type="fixed">
+    <parent link="world"/>
+    <child link="panda_link0"/>
+  </joint>
+
+  <!-- 시각용 .dae 메쉬가 URDF 에 <material> 이 없어 Gazebo 화면에서 안 보인다.
+       각 링크에 Gazebo 머티리얼(색)을 입혀 강제로 보이게 한다. (collision/물리엔 영향 없음) -->
+  <xacro:macro name="panda_color" params="link color">
+    <gazebo reference="${link}"><material>${color}</material></gazebo>
+  </xacro:macro>
+  <xacro:panda_color link="panda_link0" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link1" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link2" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link3" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link4" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link5" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link6" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_link7" color="Gazebo/White"/>
+  <xacro:panda_color link="panda_hand" color="Gazebo/Grey"/>
+  <xacro:panda_color link="panda_leftfinger" color="Gazebo/Grey"/>
+  <xacro:panda_color link="panda_rightfinger" color="Gazebo/Grey"/>
+
+  <!-- ============================================================
+       (1) ros2_control: 팔 7관절(panda_joint1~7)을 위치 제어로 노출
+           - GazeboSystem: Gazebo 물리엔진과 ros2_control 을 잇는 하드웨어
+           - command_interface: 우리가 "이 각도로 가" 라고 명령하는 통로
+           - state_interface  : 현재 각도/속도를 읽어오는 통로
+       ============================================================ -->
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware><plugin>gazebo_ros2_control/GazeboSystem</plugin></hardware>
+    <joint name="panda_joint1"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="panda_joint2"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="panda_joint3"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="panda_joint4"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="panda_joint5"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="panda_joint6"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="panda_joint7"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <!-- 그리퍼(panda_finger_joint1/2)는 5-4 컨트롤러 설정과 함께 추가 예정 -->
+  </ros2_control>
+
+  <!-- gazebo_ros2_control 플러그인: 위 ros2_control 을 실제 컨트롤러(controllers.yaml)와 연결 -->
+  <gazebo>
+    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+      <parameters>$(find arm_bringup)/config/controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+  <!-- ============================================================
+       (2) RGB-D 카메라
+           - camera_link        : 카메라가 달린 위치(베이스 panda_link0 기준)
+           - camera_optical_frame: 영상 표준 축(z=정면) 으로 회전시킨 프레임
+           - depth 센서 + libgazebo_ros_camera : 컬러/깊이 영상을 ROS 토픽으로 발행
+       ============================================================ -->
+  <!-- 빈(질량 없는) 링크는 Gazebo SDF 변환에서 FrameAttachedToGraph 에러를 내고
+       관절이 누락되므로, 카메라 링크에 최소 inertial 을 부여한다. -->
+  <link name="camera_link">
+    <inertial>
+      <mass value="0.001"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="panda_link0"/><child link="camera_link"/>
+    <origin xyz="0.4 0.0 0.9" rpy="0 1.1 0"/>     <!-- 시야 확인 후 조절 -->
+  </joint>
+  <link name="camera_optical_frame">
+    <inertial>
+      <mass value="0.001"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/><child link="camera_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/> <!-- 카메라 표준 축 -->
+  </joint>
+  <gazebo reference="camera_link">
+    <sensor name="rgbd_camera" type="depth">
+      <always_on>true</always_on><update_rate>15</update_rate>
+      <camera name="rgbd">
+        <horizontal_fov>1.2</horizontal_fov>
+        <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+        <clip><near>0.05</near><far>8.0</far></clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <camera_name>camera</camera_name>
+        <frame_name>camera_optical_frame</frame_name>
+        <min_depth>0.05</min_depth><max_depth>8.0</max_depth>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</robot>
