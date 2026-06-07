@@ -88,7 +88,7 @@ class Orchestrator:
         obj_map = {o['name']: o['position'] for o in objects}
         for step in plan['plan']:
             action = step['action']
-            target = step['target']
+            target = step.get('target') or ''   # open/close_gripper 등은 target=null → '' 로 보정 (str 필드)
             pos = obj_map.get(target)
             if pos and not self.is_reachable(pos):
                 self.logger.error(f'{target} 도달 범위 밖')
