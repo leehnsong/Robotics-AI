@@ -1,0 +1,6 @@
+string instruction
+string world_state_json
+string robot_state_json
+---
+bool success
+string plan_json
