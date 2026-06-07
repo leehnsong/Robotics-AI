@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'orchestrator_node = vla_orchestrator.orchestrator_node:main',
+            'safety_node = vla_orchestrator.safety_node:main',
         ],
     },
 )
