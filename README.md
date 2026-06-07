@@ -16,8 +16,8 @@
 
 - **환경**: Ubuntu 22.04 + ROS 2 Humble + Gazebo Classic 11
 - **로봇**: Franka Panda 7-DOF 로봇 팔
-- **AI 모델**: Google Gemini 2.5 Flash (Vision + Language)
-- **모션 플래닝**: MoveIt 2 + pymoveit2
+- **AI 모델**: Google Gemini 2.5 Flash (Vision + Language), ROBOT-ER 1.6
+- **모션 플래닝**: MoveIt 2, pymoveit2
 
 ---
 
@@ -36,32 +36,32 @@
 ## 🗂️ 프로젝트 진행 과정
 
 ### 0단계 — 사전 합의 (인터페이스 고정)
-5명이 코드 작성 전 **공통 인터페이스를 먼저 확정**했습니다. 형식(모양)은 고정, 값(내용)은 런타임에 동적으로 흐르게 설계해 어떤 월드에서도 코드 수정 없이 동작합니다.
+**공통 인터페이스를 먼저 확정**하여 형식(모양)은 고정, 값(내용)은 런타임에 동적으로 흐르게 설계해 어떤 월드에서도 코드 수정 없이 동작
 
 ### 1단계 — 환경 설치 및 워크스페이스 구성
-ROS 2 Humble, Gazebo Classic 11, MoveIt, pymoveit2, google-genai 등 의존성을 설치하고 `~/vla_arm_ws` 워크스페이스를 구성했습니다.
+ROS 2 Humble, Gazebo Classic 11, MoveIt, pymoveit2, google-genai 등 의존성을 설치하고 `~/vla_arm_ws` 워크스페이스 구성
 
 ### 2단계 — 인터페이스 패키지 우선 빌드
-모든 노드가 공유하는 메시지/서비스/액션 타입(`vla_interfaces`)을 가장 먼저 정의하고 빌드했습니다. 이 패키지가 빌드돼 있어야 나머지 노드들이 컴파일됩니다.
+모든 노드가 공유하는 메시지/서비스/액션 타입(`vla_interfaces`)을 가장 먼저 정의하고 빌드, 이 패키지가 빌드돼 있어야 나머지 노드가 컴파일 가능
 
 ### 3단계 — 시뮬레이션 환경 구축 (arm_bringup)
-Panda 팔 URDF에 `gazebo_ros2_control`과 RGB-D 카메라 센서를 추가하고, Gazebo 월드에 조작 대상 물체(블록, 접시)를 배치했습니다.
+Panda 팔 URDF에 `gazebo_ros2_control`과 RGB-D 카메라 센서를 추가하고, Gazebo 월드에 조작 대상 물체(블록, 접시)를 배치
 
 ### 4단계 — MoveIt 2 연동 및 모션 검증
-MoveIt Setup Assistant로 플래닝 그룹(`arm`, `gripper`)을 설정하고, pymoveit2로 좌표 이동 테스트를 진행해 시뮬레이션 팔의 실제 동작을 확인했습니다.
+MoveIt Setup Assistant로 플래닝 그룹(`arm`, `gripper`)을 설정하고, pymoveit2로 좌표 이동 테스트를 진행해 시뮬레이션 팔의 실제 동작을 확인
 
 ### 5단계 — 각 노드 개발 (병렬)
-인터페이스가 고정된 뒤 5명이 각자 담당 패키지를 독립적으로 개발했습니다.
+인터페이스가 고정된 뒤 각 패키지를 독립적으로 개발
 - **perception_node**: Gemini Vision으로 물체 감지 → 깊이 이미지로 3D 좌표 변환
 - **llm_planner_node**: Gemini Text로 명령을 행동 시퀀스로 분해 + 환각/포맷 검증
 - **arm_controller_node**: pymoveit2로 pick/place 실행, 충돌 회피, 비상정지
 - **safety_node + task_manager_node**: 전체 흐름 조율 및 안전 감시
 
 ### 6단계 — 통합 및 검증
-모든 노드를 연결해 end-to-end 테스트를 진행하고, `vla_bringup`의 통합 런치 파일로 단일 명령 실행을 완성했습니다.
+모든 노드를 연결해 end-to-end 테스트를 진행하고, `vla_bringup`의 통합 런치 파일로 단일 명령 실행을 완성
 
 ### 7단계 — 견고성·안전 점검
-LLM 예외 처리, 비상정지, 충돌 회피, 작업공간 범위 검사 등을 테스트했습니다.
+LLM 예외 처리, 비상정지, 충돌 회피, 작업공간 범위 검사 등을 테스트
 
 ---
 
