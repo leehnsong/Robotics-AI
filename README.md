@@ -10,6 +10,8 @@
 
 ---
 
+AQ.Ab8RN6JaTfDNibw1wobWFf4IV8csz7uSNeimejeICmUl6rAOVg
+
 ## 📌 프로젝트 개요
 
 사용자가 **"빨간 블록을 파란 접시에 올려"** 같은 자연어 명령을 입력하면, 카메라로 장면을 인식하고 AI가 행동 계획을 세워 로봇 팔이 자율적으로 작업을 수행
