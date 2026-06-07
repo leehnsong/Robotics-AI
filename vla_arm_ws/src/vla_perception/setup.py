@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'perception_node = vla_perception.perception_node:main',
         ],
     },
 )
