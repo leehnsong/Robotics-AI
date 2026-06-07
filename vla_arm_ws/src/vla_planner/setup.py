@@ -13,17 +13,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='hyunsonglee',
-    maintainer_email='hyunsonglee@todo.todo',
-    description='TODO: Package description',
+    maintainer='hancom',
+    maintainer_email='hancom@todo.todo',
+    description='VLA Planner Package',
     license='TODO: License declaration',
-    extras_require={
-        'test': [
-            'pytest',
-        ],
-    },
+    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'llm_planner_node = vla_planner.llm_planner_node:main',
         ],
     },
 )
