@@ -366,20 +366,30 @@ vla_arm_ws/src/
 │   └── vla_orchestrator/
 │       ├── task_manager_node.py         ← TaskManagerNode 클래스
 │       │                                # [구독] /user_command (std_msgs/String)
-│       │                                #   └ _on_cmd(): 전체 파이프라인 실행
-│       │                                #     ① detect_cli.call_async(DetectObjects.Request())
-│       │                                #     ② plan_cli.call_async(PlanTask.Request(...))
-│       │                                #     ③ exec_cli.send_goal_async(ExecuteAction.Goal())
-│       │                                #        × plan 스텝 수만큼 반복
+│       │                                #   └ command_cb(): orchestrator에게 명령 전달
 │       │                                # [서비스 클라이언트] /detect_objects
 │       │                                # [서비스 클라이언트] /plan_task
 │       │                                # [액션 클라이언트]  /execute_action
-│       │
+│       │                                # [발행] /vla/status (std_msgs/String)
+│       ├── orchestrator.py              ← Orchestrator 클래스 (두뇌)
+│       │                                # 전체 파이프라인 실행
+│       │                                #   ① detect_client → /detect_objects 호출
+│       │                                #   ② plan_client → /plan_task 호출
+│       │                                #   ③ execute_client → /execute_action 호출
+│       │                                # 서비스 없으면 mock 데이터 사용
+│       │                                # 에러 시 최대 3회 재시도
+│       │                                # 좌표 범위 검증 (panda_link0 기준)
+│       ├── state_machine.py             ← StateMachine 클래스
+│       │                                # 상태: IDLE→PERCEIVING→PLANNING→EXECUTING→DONE
+│       │                                # 중복 명령 방지
+│       ├── mock.py                      ← Mock 데이터
+│       │                                # MOCK_OBJECTS: 물체 위치 (panda_link0 기준)
+│       │                                # MOCK_PLAN: pick/place 플랜
 │       └── safety_node.py              ← SafetyNode 클래스
 │                                        # [발행] /emergency_stop (Bool, TRANSIENT_LOCAL)
 │                                        #   → 시작 시 False 발행 (초기화)
 │                                        # [서비스 서버] /set_estop (std_srvs/SetBool)
-│                                        #   └ _set(): 수신값 그대로 /emergency_stop 발행
+│                                        #   └ set_estop_cb(): 수신값 그대로 /emergency_stop 발행
 │
 └── vla_bringup/
     └── launch/
@@ -550,6 +560,9 @@ vla_arm_ws/
 │   ├── vla_orchestrator/
 │   │   └── vla_orchestrator/
 │   │       ├── task_manager_node.py
+│   │       ├── orchestrator.py
+│   │       ├── state_machine.py
+│   │       ├── mock.py
 │   │       └── safety_node.py
 │   └── vla_bringup/
 │       └── launch/demo.launch.py
