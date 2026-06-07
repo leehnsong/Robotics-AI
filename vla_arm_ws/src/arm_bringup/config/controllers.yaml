@@ -1,20 +1,15 @@
 # controllers.yaml
-# URDF의 <ros2_control> 블록(panda_gazebo.urdf.xacro)과 짝을 이루는 컨트롤러 설정.
-# gazebo_ros2_control 플러그인이 이 파일을 읽어 controller_manager를 띄운다.
-#
-# ⚠️ 아래 joints 목록은 URDF <ros2_control> 안의 joint 이름과 "정확히" 일치해야 한다.
-#    (현재 URDF: panda_joint1 ~ panda_joint7 / 그리퍼는 아직 미포함)
-
 controller_manager:
   ros__parameters:
-    update_rate: 100   # Hz, 컨트롤러 업데이트 주기
+    update_rate: 100
 
-    # 관절 상태(위치/속도)를 /joint_states 로 발행 — MoveIt/RViz/TF가 사용
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    # 팔 7관절을 궤적(trajectory)으로 제어 — MoveIt이 보내는 경로를 실행
     arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    gripper_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
 arm_controller:
@@ -32,3 +27,15 @@ arm_controller:
     state_interfaces:
       - position
       - velocity
+
+gripper_controller:
+  ros__parameters:
+    joints:
+      - panda_finger_joint1
+      - panda_finger_joint2
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    goal_time: 5.0

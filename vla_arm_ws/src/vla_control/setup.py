@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'control_action_server = vla_control.control_action_server:main',
         ],
     },
 )

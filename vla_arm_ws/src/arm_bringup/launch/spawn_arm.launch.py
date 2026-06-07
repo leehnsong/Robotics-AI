@@ -81,6 +81,12 @@ def generate_launch_description():
         package='controller_manager', executable='spawner',
         arguments=['arm_controller'], output='screen',
     )
+    
+    # gripper_controller 자동 로드 
+    load_gripper = Node(
+        package='controller_manager', executable='spawner',
+        arguments=['gripper_controller'], output='screen',
+    )
 
     return LaunchDescription([
         DeclareLaunchArgument('gui', default_value='true',
@@ -95,4 +101,6 @@ def generate_launch_description():
         spawn_entity,
         RegisterEventHandler(OnProcessExit(target_action=spawn_entity, on_exit=[load_jsb])),
         RegisterEventHandler(OnProcessExit(target_action=load_jsb, on_exit=[load_arm])),
+        RegisterEventHandler(OnProcessExit(target_action=load_arm, on_exit=[load_gripper])),
+    
     ])
