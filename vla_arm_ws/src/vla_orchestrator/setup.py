@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'orchestrator_node = vla_orchestrator.orchestrator_node:main',
+        'task_manager_node = vla_orchestrator.task_manager_node:main',
+        'safety_node = vla_orchestrator.safety_node:main',
         ],
     },
 )

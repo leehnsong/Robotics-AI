@@ -7,7 +7,12 @@ MOCK_OBJECTS = [
 
 MOCK_PLAN = {
     "plan": [
-        {"action": "pick",  "target": "red_block"},
-        {"action": "place", "target": "blue_plate"},
+        {"action": "open_gripper",  "target": ""},
+        {"action": "pick",          "target": "red_block"},
+        {"action": "place",         "target": "blue_plate"},
+        {"action": "close_gripper", "target": ""},
+        {"action": "move_home",     "target": ""},
     ]
 }
+
+MOCK_ROBOT_STATE = {"gripper": "open", "holding": None}
