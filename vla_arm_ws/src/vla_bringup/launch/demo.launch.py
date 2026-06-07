@@ -5,11 +5,11 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch.substitutions import Command, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def generate_launch_description():
 
+    # ── (1) Gazebo ──────────────────────────────────────────
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('gazebo_ros'), '/launch/gazebo.launch.py'
@@ -19,6 +19,7 @@ def generate_launch_description():
         ])}.items()
     )
 
+    # ── (2) robot_state_publisher ────────────────────────────
     robot_description = ParameterValue(
         Command(['xacro ', PathJoinSubstitution([
             FindPackageShare('arm_bringup'), 'urdf', 'panda_gazebo.urdf.xacro'
@@ -31,6 +32,7 @@ def generate_launch_description():
         parameters=[{'robot_description': robot_description}]
     )
 
+    # ── (3) 팔 스폰 (3초 후) ────────────────────────────────
     spawn = TimerAction(period=3.0, actions=[
         Node(
             package='gazebo_ros',
@@ -39,6 +41,7 @@ def generate_launch_description():
         )
     ])
 
+    # ── (4) 컨트롤러 (5초 후) ───────────────────────────────
     joint_state_broadcaster = TimerAction(period=5.0, actions=[
         Node(
             package='controller_manager',
@@ -46,7 +49,6 @@ def generate_launch_description():
             arguments=['joint_state_broadcaster'],
         )
     ])
-
     arm_controller = TimerAction(period=6.0, actions=[
         Node(
             package='controller_manager',
@@ -55,6 +57,7 @@ def generate_launch_description():
         )
     ])
 
+    # ── (5) MoveIt + RViz (7초 후) ──────────────────────────
     move_group = TimerAction(period=7.0, actions=[
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
@@ -63,6 +66,7 @@ def generate_launch_description():
         )
     ])
 
+    # ── (6) VLA 노드들 (10초 후) ────────────────────────────
     perception_node = TimerAction(period=10.0, actions=[
         Node(
             package='vla_perception',
@@ -70,7 +74,6 @@ def generate_launch_description():
             output='screen'
         )
     ])
-
     planner_node = TimerAction(period=10.0, actions=[
         Node(
             package='vla_planner',
@@ -78,11 +81,24 @@ def generate_launch_description():
             output='screen'
         )
     ])
-
-    orchestrator_node = TimerAction(period=11.0, actions=[
+    control_node = TimerAction(period=10.0, actions=[
+        Node(
+            package='vla_control',
+            executable='control_action_server',
+            output='screen'
+        )
+    ])
+    safety_node = TimerAction(period=10.0, actions=[
         Node(
             package='vla_orchestrator',
-            executable='orchestrator_node',
+            executable='safety_node',
+            output='screen'
+        )
+    ])
+    task_manager_node = TimerAction(period=11.0, actions=[
+        Node(
+            package='vla_orchestrator',
+            executable='task_manager_node',
             output='screen'
         )
     ])
@@ -96,5 +112,7 @@ def generate_launch_description():
         move_group,
         perception_node,
         planner_node,
-        orchestrator_node,
+        control_node,
+        safety_node,
+        task_manager_node,
     ])
