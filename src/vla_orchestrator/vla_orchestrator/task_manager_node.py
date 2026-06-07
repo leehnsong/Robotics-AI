@@ -7,13 +7,13 @@ from vla_interfaces.srv import DetectObjects, PlanTask
 from vla_interfaces.action import ExecuteAction
 from .orchestrator import Orchestrator
 
-class OrchestratorNode(Node):
+class TaskManagerNode(Node):
     def __init__(self):
-        super().__init__('vla_orchestrator')
+        super().__init__('task_manager_node')
 
-        detect_client = self.create_client(DetectObjects, '/vla/detect_objects')
-        plan_client = self.create_client(PlanTask, '/vla/plan_task')
-        execute_client = ActionClient(self, ExecuteAction, '/vla/execute_action')
+        detect_client = self.create_client(DetectObjects, '/detect_objects')
+        plan_client = self.create_client(PlanTask, '/plan_task')
+        execute_client = ActionClient(self, ExecuteAction, '/execute_action')
         self.status_pub = self.create_publisher(String, '/vla/status', 10)
 
         self.orch = Orchestrator(
@@ -24,8 +24,8 @@ class OrchestratorNode(Node):
             status_cb=self.publish_status,
         )
 
-        self.create_subscription(String, '/vla/command', self.command_cb, 10)
-        self.get_logger().info('Orchestrator started!')
+        self.create_subscription(String, '/user_command', self.command_cb, 10)
+        self.get_logger().info('TaskManager started!')
 
     def command_cb(self, msg):
         self.orch.handle_command(msg.data)
@@ -37,7 +37,7 @@ class OrchestratorNode(Node):
 
 def main():
     rclpy.init()
-    node = OrchestratorNode()
+    node = TaskManagerNode()
     rclpy.spin(node)
     rclpy.shutdown()
 
